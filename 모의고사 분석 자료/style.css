@@ -1,0 +1,463 @@
+html {
+    height: 100%;
+}
+
+body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background-color: #f0f2f5;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    flex-direction: column;
+    padding: 0px;
+    box-sizing: border-box;
+    gap: 15px;
+    /* 툴바와 슬라이드 사이 간격 */
+}
+
+.toolbar {
+    width: 100%;
+    max-width: 1900px;
+    background-color: #fff;
+    padding: 10px 20px;
+    margin-top: 2px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-sizing: border-box;
+    position: relative;
+}
+
+.tool-group {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+#nav-group {
+    position: absolute;
+    /* 공중에 띄워서 */
+    left: 50%;
+    /* 왼쪽에서 50% 지점으로 보낸 뒤 */
+    transform: translateX(-50%);
+    /* 내 크기의 절반만큼 다시 왼쪽으로 와서 '정중앙' 맞춤 */
+
+    /* 기존의 flex 관련 속성들이 방해하지 않게 설정 */
+    display: flex;
+    gap: 10px;
+    z-index: 10;
+    /* 다른 버튼들보다 위에 뜨게 (혹시 겹치더라도 클릭 가능하게) */
+}
+
+
+
+.tool-btn,
+.nav-btn,
+.passage-btn {
+    background-color: transparent;
+    border: 2px solid #ccc;
+    border-radius: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 700;
+    transition: all 0.3s;
+    white-space: nowrap;
+    flex-shrink: 0;
+    /* 버튼이 줄어들지 않도록 설정 */
+    text-align: center;
+    min-width: 60px;
+    /* 모든 버튼의 최소 너비를 설정하여 통일감 부여 */
+}
+
+#passage-group {
+    /* 기존 스크롤 관련 코드 유지 (flex-grow, overflow-x 등) */
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+    overflow-x: auto;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+
+    /* ★ 수정/추가: 오른쪽 정렬 및 영역 제한 */
+    justify-content: flex-end;
+    /* 내용물을 오른쪽 끝으로 */
+    margin-left: auto;
+    /* 왼쪽 공간을 다 밀어내서 오른쪽으로 붙음 */
+    /* ★ 중요: 지문 버튼이 너무 많아져도 가운데 '이전/다음' 버튼을 침범하지 않게 너비 제한 */
+    /* 화면의 40% 정도만 쓰라고 하면 가운데 버튼과 겹치지 않습니다 */
+    max-width: 35%;
+}
+
+.tool-btn:hover,
+.nav-btn:hover,
+.passage-btn:hover {
+    background-color: #f0f0f0;
+    transform: translateY(-2px);
+}
+
+.tool-btn.active {
+    border-color: #F44336;
+    color: #F44336;
+    box-shadow: 0 0 5px rgba(244, 67, 54, 0.5);
+}
+
+.tool-btn.click.active {
+    border-color: #4CAF50;
+    color: #4CAF50;
+    box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
+}
+
+.tool-btn.eraser.active {
+    border-color: #0288D1;
+    color: #0288D1;
+    box-shadow: 0 0 5px rgba(2, 136, 209, 0.5);
+}
+
+#clear-btn {
+    border-color: #607D8B;
+    color: #607D8B;
+}
+
+.nav-btn {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+}
+
+.nav-btn:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.passage-btn {
+    background-color: #607D8B;
+    color: white;
+    border: none;
+}
+
+.slideshow-container {
+    position: relative;
+    width: 100%;
+    max-width: 1900px;
+    max-height: 970px;
+    background: #ffffff;
+    border-radius: 15px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    display: flex;
+    aspect-ratio: 16 / 9;
+}
+
+.slide {
+    display: none;
+    padding: 3% 5%;
+    animation: fadeIn 0.8s;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+    /* For canvas positioning */
+}
+
+.drawing-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0.4;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.passage {
+    font-size: clamp(1.2em, 2.6vw, 2.6em);
+    line-height: 3.6;
+    font-family: 'Georgia', serif;
+    text-align: left;
+    margin: 0;
+    user-select: none;
+    letter-spacing: 0.5px;
+}
+
+/* Annotation styles */
+.anno {
+    position: relative;
+    display: inline;
+    line-height: 1.2;
+    cursor: pointer;
+}
+
+/* style.css 파일 내 .tip 클래스 */
+
+.tip {
+    visibility: hidden;
+    opacity: 0;
+    position: absolute;
+    bottom: 110%;
+    left: 0;
+    font-family: 'Nanum Gothic Coding', monospace;
+    font-size: 0.7em;
+    white-space: nowrap;
+    padding: 5px 8px;
+    border-radius: 6px;
+
+    /* ★ 기존: transition: all 0.3s; */
+    /* ★ 변경: 위치 이동은 빼고, 투명도(opacity)와 가시성(visibility)만 애니메이션 적용 */
+    transition: opacity 0.3s, visibility 0.3s;
+
+    background-color: #333;
+    color: #fff;
+    z-index: 10;
+}
+
+/* style.css */
+
+.tip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: var(--arrow-x, 15px);
+    transform: translateX(-50%);
+    border-width: 5px;
+    border-style: solid;
+    border-color: #333 transparent transparent transparent;
+}
+
+.tip.visible {
+    visibility: visible;
+    opacity: 1;
+}
+
+.tip.down {
+    bottom: auto;
+    /* 기존 bottom 속성 초기화 */
+    top: calc(100% + 5px);
+    /* 기준 단어의 5px 아래에 위치 */
+}
+
+/* 아래로 뜨는 툴팁의 화살표 모양 (위로 향하게) */
+.tip.down::after {
+    top: auto;
+    /* 기존 top 속성 초기화 */
+    bottom: 100%;
+    /* 툴팁의 맨 위에 화살표 위치 */
+    border-color: transparent transparent #333 transparent;
+    /* 아래쪽 테두리에만 색 적용 */
+}
+
+/* Accessibility Focus Style */
+.anno:focus,
+.quiz-options li:focus {
+    outline: 3px solid #007bff;
+    outline-offset: 2px;
+    border-radius: 4px;
+    /* 포커스 스타일에 맞게 조정 */
+}
+
+/* Color styles for text */
+.anno-subject,
+.tip-subject {
+    color: #4CAF50;
+    font-weight: bold;
+}
+
+.anno-verb,
+.tip-verb {
+    color: #F44336;
+    font-weight: bold;
+}
+
+.anno-comp,
+.tip-comp {
+    color: #FFC107;
+    font-weight: bold;
+}
+
+.anno-grammar,
+.tip-grammar {
+    color: #0288D1;
+    font-weight: bold;
+}
+
+.anno-grammar-alt,
+.tip-grammar-alt {
+    color: #0097A7;
+    font-weight: bold;
+}
+
+.anno-vocab,
+.tip-vocab {
+    color: #8E44AD;
+    font-weight: bold;
+}
+
+.slide-counter {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    font-size: 0.9em;
+    color: #888;
+}
+
+/* Quiz Styles */
+.quiz-container {
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: clamp(1.0em, 2vw, 2em);
+    line-height: 1.8;
+}
+
+.quiz-question {
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+.quiz-summary {
+    font-size: 1.9em;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+.quiz-options {
+    list-style-type: none;
+    padding: 0;
+    width: 100%;
+    counter-reset: quiz-option-counter;
+    /* 1. 카운터 초기화 */
+}
+
+.quiz-options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+/* style.css 수정 및 추가 */
+
+/* 기존 .quiz-options li 스타일을 찾아서 아래 내용으로 덮어씌우거나 수정해주세요 */
+.quiz-options li {
+    /* 1. 글자 크기 (기본값보다 키우기, 예: 1.1em -> 1.3em) */
+    font-size: clamp(0.6em, 2vw, 2em);
+    /* 2. 보기와 보기 사이의 간격 (바깥 여백) */
+    margin-bottom: 25px;
+    /* 3. (선택) 보기가 두 줄 이상일 때, 줄 사이 간격 */
+    line-height: 2.3;
+    margin-bottom: 15px;
+    background-color: transparent;
+    /* 배경색 제거 (흰색이나 투명) */
+    padding: 10px 0;
+    /* 패딩 조절 */
+    border-radius: 0;
+    /* 둥근 모서리 제거 (필요시 유지) */
+    cursor: text;
+    /* 마우스 커서를 '텍스트 입력' 모양(I)이나 기본(default)으로 변경 */
+    border-left: none;
+    /* 정답 체크용 테두리 제거 */
+    position: relative;
+    /* padding-left: 45px;  <- 이 부분은 아래 .opt-num 때문에 조절이 필요할 수 있습니다. */
+    font-size: 1.1em;
+    /* 글자 크기 적절히 조절 */
+}
+
+/* 보기 번호 (1. 2. 3.) 스타일 추가 */
+.opt-num {
+    font-weight: bold;
+    margin-right: 10px;
+    color: #4CAF50;
+    /* 선생님 취향에 맞는 색으로 변경 가능 */
+}
+
+/* Last Quiz Specific Styles */
+.last-quiz .quiz-summary {
+    font-size: 1.5em;
+    line-height: 3.5;
+    font-family: 'Georgia', serif;
+    font-weight: normal;
+    text-align: left;
+    margin: 0;
+    user-select: none;
+    letter-spacing: 0.5px;
+}
+
+.last-quiz .quiz-question {
+    font-size: 1em;
+}
+
+.quiz-options-inline {
+    display: flex;
+    justify-content: left;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.quiz-options-inline li {
+    padding: 10px 15px;
+    margin-bottom: 0;
+    flex-shrink: 0;
+    text-align: left;
+}
+
+.bracket {
+    color: #ff5722;
+    font-weight: bold;
+}
+
+.quiz-options-summary-layout {
+    display: grid;
+    /* Grid 레이아웃 사용 */
+    grid-template-columns: repeat(3, 1fr);
+    /* 3개의 동일한 너비의 열 생성 */
+    gap: 15px;
+    /* 보기 사이의 간격 (px 단위 추천) */
+}
+
+/* 이미지 팝업(모달) 스타일 */
+.modal {
+    display: none;
+    /* 평소에는 숨김 */
+    position: fixed;
+    z-index: 100;
+    /* 다른 요소들보다 항상 위에 있도록 설정 */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.8);
+    /* 반투명 검은색 배경 */
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    margin: auto;
+    display: block;
+    max-width: 80%;
+    max-height: 80%;
+}
+
+.close-btn {
+    position: absolute;
+    top: 15px;
+    right: 35px;
+    color: #f1f1f1;
+    font-size: 40px;
+    font-weight: bold;
+    cursor: pointer;
+}
