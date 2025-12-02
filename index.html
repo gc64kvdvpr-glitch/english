@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>영어 지문 분석 자료</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&family=Nanum+Gothic+Coding&display=swap"
+        rel="stylesheet">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+    <div class="slideshow-container" id="slideshow-container">
+        <!-- 슬라이ß드 공간 -->
+    </div>
+
+    <div class="toolbar" role="toolbar">
+        <!-- 1. 기능 버튼 그룹 -->
+        <div class="tool-group">
+            <button id="click-btn" class="tool-btn click active"> 클릭</button>
+            <button id="pen-btn" class="tool-btn">펜</button>
+            <button id="eraser-btn" class="tool-btn eraser">지우개</button>
+            <button id="clear-btn" class="tool-btn">모두</button>
+        </div>
+
+        <!-- 2. 네비게이션 그룹 -->
+        <div class="tool-group" id="nav-group">
+            <button class="nav-btn" id="prevBtn">이전</button>
+            <button class="nav-btn" id="nextBtn">다음</button>
+        </div>
+
+        <!-- 4. 지문 버튼 그룹 (여기는 버튼만 들어갑니다) -->
+        <div class="tool-group" id="passage-group">
+            <!-- JS가 여기에 버튼을 생성합니다 -->
+        </div>
+
+        <!-- 3. 단원 선택 메뉴 (청소 구역 밖으로 피신!) -->
+        <div class="tool-group">
+            <select id="category-select" class="tool-btn" style="text-align: left; min-width: 160px;">
+                <option value="all">📂 전체 보기</option>
+            </select>
+        </div>
+
+
+    </div>
+
+    <div id="imageModal" class="modal">
+        <span class="close-btn">&times;</span>
+        <img class="modal-content" id="modalImage" alt="확대 이미지">
+    </div>
+
+    <script>
+        window.MASTER_DATA = []; 
+    </script>
+
+    <script src="data/2024_10.js"></script>
+    <script src="data/2025_10.js"></script>
+    <!-- 메인 스크립트 -->
+    <script src="script.js" defer></script>
+</body>
+
+</html>
