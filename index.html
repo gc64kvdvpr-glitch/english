@@ -3,46 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>송양고 오늘의 급식</title>
+    <title>송양고 오늘 점심</title>
     <style>
-        body { margin: 0; padding: 20px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: #ffffff; color: #37352f; }
-        .container { max-width: 100%; }
-        h3 { margin: 0 0 10px 0; font-size: 16px; color: #eb5757; font-weight: 600; }
-        .menu { font-size: 14px; line-height: 1.6; white-space: pre-wrap; word-break: keep-all; }
-        .info { font-size: 12px; color: #888; margin-top: 5px; }
+        /* 노션 임베드에 최적화된 심플 디자인 */
+        body { 
+            margin: 0; 
+            padding: 20px; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; 
+            background-color: #ffffff; 
+            color: #37352f; 
+        }
+        h3 { 
+            margin: 0 0 10px 0; 
+            font-size: 16px; 
+            color: #eb5757; /* 붉은색 포인트 */
+            font-weight: 600; 
+        }
+        .menu { 
+            font-size: 14px; 
+            line-height: 1.6; 
+            white-space: pre-wrap; 
+            word-break: keep-all; 
+        }
+        .kcal {
+            margin-top: 8px;
+            font-size: 12px;
+            color: #888;
+        }
         .error { color: #e03e3e; font-size: 13px; }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div id="container">
         <h3>🍱 <span id="date-display">오늘</span>의 점심</h3>
         
-        <div id="meal-box" class="menu">
-            <span class="info">데이터를 불러오는 중...</span>
-        </div>
-        <div id="kcal-box" class="info"></div>
+        <div id="meal-box" class="menu">메뉴를 불러오는 중...</div>
+        
+        <div id="kcal-box" class="kcal"></div>
     </div>
 
     <script>
-        // ▼▼▼ 여기에 인증키를 붙여넣으세요 (따옴표 안에) ▼▼▼
+        // ▼▼▼ 발급받은 인증키를 따옴표 안에 넣어주세요 ▼▼▼
         const API_KEY = 'eddddf6d86cc4953a00248d7496c0c8a'; 
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
         const EDU_CODE = 'J10'; // 경기도교육청
-        const SCH_CODE = '7531123'; // 송양고등학교
+        const SCH_CODE = '7531167'; // 송양고등학교
         
-        // 오늘 날짜 구하기
-        const today = new Date();
-        const year = today.getFullYear();
-        const month = ('0' + (today.getMonth() + 1)).slice(-2);
-        const day = ('0' + today.getDate()).slice(-2);
-        const dateStr = `${year}${month}${day}`; // YYYYMMDD
-        
-        // 화면에 날짜 표시 (예: 12월 05일)
-        document.getElementById('date-display').innerText = `${month}월 ${day}일`;
+        // 1. 오늘 날짜 구하기 (시간 상관없이 연월일만 추출)
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = ('0' + (now.getMonth() + 1)).slice(-2);
+        const day = ('0' + now.getDate()).slice(-2);
+        const dateStr = `${year}${month}${day}`; // 예: 20251204
 
-        // URL 생성 (중식: Code=2, 타입: json 필수)
-        const url = `https://open.neis.go.kr/hub/mealServiceDietInfo?Type=json&KEY=${API_KEY}&ATPT_OFCDC_SC_CODE=${EDU_CODE}&SD_SCHUL_CODE=${SCH_CODE}&MMEAL_SC_CODE=2&MLSV_YMD=${dateStr}`;
+        // 화면에 날짜 표시 (예: 12월 4일)
+        document.getElementById('date-display').innerText = `${now.getMonth() + 1}월 ${now.getDate()}일`;
+
+        // 2. API 주소 생성
+        // 핵심: &MMEAL_SC_CODE=2 (이 부분이 '중식'만 가져오게 하는 코드입니다)
+        const url = `https://open.neis.go.kr/hub/mealServiceDietInfo?Type=json&KEY=${API_KEY}&ATPT_OFCDC_SC_CODE=${EDU_CODE}&SD_SCHUL_CODE=${SCH_CODE}&MLSV_YMD=${dateStr}&MMEAL_SC_CODE=2`;
 
         fetch(url)
             .then(response => response.json())
@@ -50,35 +70,27 @@
                 const mealBox = document.getElementById('meal-box');
                 const kcalBox = document.getElementById('kcal-box');
 
-                // 1. 에러 체크 (키가 틀리거나 등등)
-                if (data.RESULT && data.RESULT.CODE !== 'INFO-000') {
-                    if(data.RESULT.CODE === 'INFO-200') {
-                        mealBox.innerText = "오늘은 급식이 없습니다."; // 주말/공휴일
-                    } else {
-                        mealBox.innerText = `오류 발생: ${data.RESULT.MESSAGE}`; // 키 오류 등
-                        mealBox.className = 'error';
-                    }
-                    return;
-                }
-
-                // 2. 정상 데이터 처리
+                // 데이터가 정상인지 확인
                 if (data.mealServiceDietInfo) {
+                    // 점심 데이터 추출
                     const row = data.mealServiceDietInfo[1].row[0];
-                    const rawMenu = row.DDISH_NM;
-                    const rawKcal = row.CAL_INFO;
+                    let menu = row.DDISH_NM;
+                    let kcal = row.CAL_INFO;
 
-                    // 메뉴 정리 (지저분한 숫자, 괄호 제거)
-                    const cleanMenu = rawMenu.replace(/\([0-9\.]+\)/g, '').replace(/<br\/>/g, '\n');
+                    // 보기 싫은 기호들 제거 (알레르기 번호, 줄바꿈 태그 등)
+                    menu = menu.replace(/\([0-9\.]+\)/g, '').replace(/<br\/>/g, '\n');
                     
-                    mealBox.innerText = cleanMenu;
-                    kcalBox.innerText = `열량: ${rawKcal}`;
+                    mealBox.innerText = menu;
+                    kcalBox.innerText = `열량: ${kcal}`;
                 } else {
-                    mealBox.innerText = "급식 정보를 찾을 수 없습니다.";
+                    // 데이터가 없는 경우 (주말, 공휴일, 재량휴업일 등)
+                    // 에러 메시지 대신 "급식이 없습니다"라고 깔끔하게 표시
+                    mealBox.innerText = "오늘은 급식이 없습니다.";
                 }
             })
-            .catch(error => {
-                console.error(error);
-                document.getElementById('meal-box').innerText = "네트워크/서버 연결 실패";
+            .catch(err => {
+                console.error(err);
+                document.getElementById('meal-box').innerText = "정보를 가져올 수 없습니다.";
             });
     </script>
 </body>
