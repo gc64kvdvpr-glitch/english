@@ -25,11 +25,23 @@
             white-space: pre-wrap; 
             word-break: keep-all; 
         }
-        .kcal {
-            margin-top: 8px;
-            font-size: 12px;
-            color: #888;
+        
+        /* 정보 텍스트 공통 스타일 */
+        .info-text { 
+            margin-top: 6px; 
+            font-size: 12px; 
+            color: #888; 
+            line-height: 1.5;
+            white-space: pre-wrap; 
         }
+        
+        /* [수정됨] 영양 정보 스타일: 구분선 제거 및 여백 최소화 */
+        .nutri-box {
+            margin-top: 0;   /* 위쪽 여백 제거 (열량 바로 밑에 붙음) */
+            padding-top: 0;  /* 안쪽 여백 제거 */
+            border-top: none; /* 구분선 제거 */
+        }
+
         .error { color: #e03e3e; font-size: 13px; }
     </style>
 </head>
@@ -39,13 +51,15 @@
         
         <div id="meal-box" class="menu">메뉴를 불러오는 중...</div>
         
-        <div id="kcal-box" class="kcal"></div>
+        <div id="kcal-box" class="info-text"></div>
+
+        <div id="nutri-box" class="info-text nutri-box"></div>
     </div>
 
     <script>
-        // ▼▼▼ 발급받은 인증키를 따옴표 안에 넣어주세요 ▼▼▼
+        // ▼▼▼ 선생님이 보내주신 인증키를 적용했습니다 ▼▼▼
         const API_KEY = 'eddddf6d86cc4953a00248d7496c0c8a'; 
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
         const EDU_CODE = 'J10'; // 경기도교육청
         const SCH_CODE = '7531167'; // 송양고등학교
@@ -57,38 +71,42 @@
         const day = ('0' + now.getDate()).slice(-2);
         const dateStr = `${year}${month}${day}`;
 
-        // [수정된 부분] 요일 배열 추가 및 표시 형식 변경
         const days = ['일', '월', '화', '수', '목', '금', '토'];
         const dayOfWeek = days[now.getDay()];
         
-        // 예: "12월 4일(목)" 형태로 표시
+        // 화면 날짜 표시
         document.getElementById('date-display').innerText = `${now.getMonth() + 1}월 ${now.getDate()}일(${dayOfWeek})`;
 
-        // 2. API 주소 생성
-        // 핵심: &MMEAL_SC_CODE=2 (이 부분이 '중식'만 가져오게 하는 코드입니다)
+        // API 주소 생성 (중식 코드: 2)
         const url = `https://open.neis.go.kr/hub/mealServiceDietInfo?Type=json&KEY=${API_KEY}&ATPT_OFCDC_SC_CODE=${EDU_CODE}&SD_SCHUL_CODE=${SCH_CODE}&MLSV_YMD=${dateStr}&MMEAL_SC_CODE=2`;
 
         fetch(url)
             .then(response => response.json())
             .then(data => {
                 const mealBox = document.getElementById('meal-box');
-                const kcalBox = document.getElementById('kcal-box');
+                const nutriBox = document.getElementById('nutri-box');
 
-                // 데이터가 정상인지 확인
                 if (data.mealServiceDietInfo) {
-                    // 점심 데이터 추출
                     const row = data.mealServiceDietInfo[1].row[0];
                     let menu = row.DDISH_NM;
-                    let kcal = row.CAL_INFO;
+                    
+                    // 1. 영양 정보 필터링
+                    const rawNutri = row.NTR_INFO; 
+                    const targets = ['탄수화물', '단백질', '지방']; 
+                    
+                    const filteredNutri = rawNutri.split('<br/>').filter(line => {
+                        return targets.some(target => line.includes(target));
+                    }).join('\n');
 
-                    // 보기 싫은 기호들 제거 (알레르기 번호, 줄바꿈 태그 등)
+                    // 2. 텍스트 정리
                     menu = menu.replace(/\([0-9\.]+\)/g, '').replace(/<br\/>/g, '\n');
                     
+                    // 3. 화면 출력
                     mealBox.innerText = menu;
-                    kcalBox.innerText = `열량: ${kcal}`;
+                    document.getElementById('kcal-box').innerText = `열량: ${row.CAL_INFO}`;
+                    nutriBox.innerText = filteredNutri; // 구분선 없이 바로 출력됨
+
                 } else {
-                    // 데이터가 없는 경우 (주말, 공휴일, 재량휴업일 등)
-                    // 에러 메시지 대신 "급식이 없습니다"라고 깔끔하게 표시
                     mealBox.innerText = "오늘은 급식이 없습니다.";
                 }
             })
