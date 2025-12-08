@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>송양고 오늘 점심</title>
     <style>
-        /* 노션 임베드에 최적화된 심플 디자인 */
         body { 
             margin: 0; 
             padding: 20px; 
@@ -16,7 +15,7 @@
         h3 { 
             margin: 0 0 10px 0; 
             font-size: 16px; 
-            color: #eb5757; /* 붉은색 포인트 */
+            color: #eb5757; 
             font-weight: 600; 
         }
         .menu { 
@@ -25,8 +24,6 @@
             white-space: pre-wrap; 
             word-break: keep-all; 
         }
-        
-        /* 정보 텍스트 공통 스타일 */
         .info-text { 
             margin-top: 6px; 
             font-size: 12px; 
@@ -34,86 +31,91 @@
             line-height: 1.5;
             white-space: pre-wrap; 
         }
-        
-        /* [수정됨] 영양 정보 스타일: 구분선 제거 및 여백 최소화 */
         .nutri-box {
-            margin-top: 0;   /* 위쪽 여백 제거 (열량 바로 밑에 붙음) */
-            padding-top: 0;  /* 안쪽 여백 제거 */
-            border-top: none; /* 구분선 제거 */
+            margin-top: 0;   
+            padding-top: 0;  
+            border-top: none; 
         }
-
-        .error { color: #e03e3e; font-size: 13px; }
     </style>
 </head>
 <body>
     <div id="container">
         <h3>🍱 <span id="date-display">오늘</span>의 점심</h3>
-        
         <div id="meal-box" class="menu">메뉴를 불러오는 중...</div>
-        
         <div id="kcal-box" class="info-text"></div>
-
         <div id="nutri-box" class="info-text nutri-box"></div>
     </div>
 
     <script>
-        // ▼▼▼ 선생님이 보내주신 인증키를 적용했습니다 ▼▼▼
+        // ▼▼▼ 인증키 ▼▼▼
         const API_KEY = 'eddddf6d86cc4953a00248d7496c0c8a'; 
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-        const EDU_CODE = 'J10'; // 경기도교육청
-        const SCH_CODE = '7531167'; // 송양고등학교
+        const EDU_CODE = 'J10'; 
+        const SCH_CODE = '7531167'; 
         
-        // 날짜 및 요일 계산
         const now = new Date();
         const year = now.getFullYear();
         const month = ('0' + (now.getMonth() + 1)).slice(-2);
         const day = ('0' + now.getDate()).slice(-2);
         const dateStr = `${year}${month}${day}`;
-
         const days = ['일', '월', '화', '수', '목', '금', '토'];
         const dayOfWeek = days[now.getDay()];
         
-        // 화면 날짜 표시
         document.getElementById('date-display').innerText = `${now.getMonth() + 1}월 ${now.getDate()}일(${dayOfWeek})`;
 
-        // API 주소 생성 (중식 코드: 2)
-        const url = `https://open.neis.go.kr/hub/mealServiceDietInfo?Type=json&KEY=${API_KEY}&ATPT_OFCDC_SC_CODE=${EDU_CODE}&SD_SCHUL_CODE=${SCH_CODE}&MLSV_YMD=${dateStr}&MMEAL_SC_CODE=2`;
+        // 화면에 그려주는 함수 (중복 제거용)
+        function renderLunch(menu, kcal, nutri) {
+            document.getElementById('meal-box').innerText = menu;
+            document.getElementById('kcal-box').innerText = `열량: ${kcal}`;
+            document.getElementById('nutri-box').innerText = nutri;
+        }
 
-        fetch(url)
-            .then(response => response.json())
-            .then(data => {
-                const mealBox = document.getElementById('meal-box');
-                const nutriBox = document.getElementById('nutri-box');
+        // [핵심] 1. 브라우저에 오늘 메뉴가 저장되어 있는지 확인
+        const cacheKey = `lunch_data_${SCH_CODE}_${dateStr}`; // 키 이름: lunch_data_학교코드_날짜
+        const cachedData = localStorage.getItem(cacheKey);
 
-                if (data.mealServiceDietInfo) {
-                    const row = data.mealServiceDietInfo[1].row[0];
-                    let menu = row.DDISH_NM;
-                    
-                    // 1. 영양 정보 필터링
-                    const rawNutri = row.NTR_INFO; 
-                    const targets = ['탄수화물', '단백질', '지방']; 
-                    
-                    const filteredNutri = rawNutri.split('<br/>').filter(line => {
-                        return targets.some(target => line.includes(target));
-                    }).join('\n');
+        if (cachedData) {
+            // [A] 저장된 게 있으면 -> 즉시 보여줌 (속도 0초)
+            const data = JSON.parse(cachedData);
+            renderLunch(data.menu, data.kcal, data.nutri);
+            console.log("저장된 급식 정보를 불러왔습니다.");
+        } else {
+            // [B] 없으면 -> 교육청 서버에서 가져옴
+            const url = `https://open.neis.go.kr/hub/mealServiceDietInfo?Type=json&KEY=${API_KEY}&ATPT_OFCDC_SC_CODE=${EDU_CODE}&SD_SCHUL_CODE=${SCH_CODE}&MLSV_YMD=${dateStr}&MMEAL_SC_CODE=2`;
 
-                    // 2. 텍스트 정리
-                    menu = menu.replace(/\([0-9\.]+\)/g, '').replace(/<br\/>/g, '\n');
-                    
-                    // 3. 화면 출력
-                    mealBox.innerText = menu;
-                    document.getElementById('kcal-box').innerText = `열량: ${row.CAL_INFO}`;
-                    nutriBox.innerText = filteredNutri; // 구분선 없이 바로 출력됨
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.mealServiceDietInfo) {
+                        const row = data.mealServiceDietInfo[1].row[0];
+                        
+                        // 데이터 가공
+                        let menu = row.DDISH_NM.replace(/\([0-9\.]+\)/g, '').replace(/<br\/>/g, '\n');
+                        let kcal = row.CAL_INFO;
+                        
+                        const rawNutri = row.NTR_INFO; 
+                        const targets = ['탄수화물', '단백질', '지방']; 
+                        const filteredNutri = rawNutri.split('<br/>').filter(line => {
+                            return targets.some(target => line.includes(target));
+                        }).join('\n');
 
-                } else {
-                    mealBox.innerText = "오늘은 급식이 없습니다.";
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                document.getElementById('meal-box').innerText = "정보를 가져올 수 없습니다.";
-            });
+                        // 화면 출력
+                        renderLunch(menu, kcal, filteredNutri);
+
+                        // [핵심] 2. 다 가져왔으면 브라우저에 저장해둠 (다음 번 접속을 위해)
+                        const saveObj = { menu: menu, kcal: kcal, nutri: filteredNutri };
+                        localStorage.setItem(cacheKey, JSON.stringify(saveObj));
+
+                    } else {
+                        document.getElementById('meal-box').innerText = "오늘은 급식이 없습니다.";
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    document.getElementById('meal-box').innerText = "정보를 가져올 수 없습니다.";
+                });
+        }
     </script>
 </body>
 </html>
